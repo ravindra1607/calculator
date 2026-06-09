@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Simple Calculator</title>
+	<style>
+		body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#f3f4f6;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+		.calc{background:#111827;color:#fff;padding:20px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.6);width:320px}
+		.display{background:#0b1220;padding:16px;border-radius:8px;font-size:28px;text-align:right;overflow:hidden;white-space:nowrap}
+		.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+		button{padding:16px;font-size:18px;border:0;border-radius:8px;background:#1f2937;color:#fff;cursor:pointer}
+		button.op{background:#f59e0b;color:#111827}
+		button.eq{grid-column:span 2;background:#059669}
+		button.clear{background:#ef4444}
+	</style>
+</head>
+<body>
+	<div class="calc">
+		<div id="display" class="display">0</div>
+		<div class="keys">
+			<button class="clear" data-action="clear">C</button>
+			<button data-action="back">⌫</button>
+			<button data-action="percent">%</button>
+			<button class="op" data-action="/">÷</button>
+
+			<button data-num>7</button>
+			<button data-num>8</button>
+			<button data-num>9</button>
+			<button class="op" data-action="*">×</button>
+
+			<button data-num>4</button>
+			<button data-num>5</button>
+			<button data-num>6</button>
+			<button class="op" data-action="-">−</button>
+
+			<button data-num>1</button>
+			<button data-num>2</button>
+			<button data-num>3</button>
+			<button class="op" data-action="+">+</button>
+
+			<button data-num>0</button>
+			<button data-num>.</button>
+			<button class="eq" data-action="=">=</button>
+		</div>
+	</div>
+
+	<script>
+		const display = document.getElementById('display');
+		let current = '';
+
+		function updateDisplay(){
+			display.textContent = current === '' ? '0' : current;
+		}
+
+		function append(n){
+			if(n === '.' && current.slice(-1) === '.') return;
+			current += n;
+			updateDisplay();
+		}
+
+		function perform(op){
+			if(op === 'clear'){ current = ''; updateDisplay(); return }
+			if(op === 'back'){ current = current.slice(0,-1); updateDisplay(); return }
+			if(op === '%'){
+				try{ current = String(eval(current) / 100) }catch{current=''}
+				updateDisplay(); return
+			}
+			if(op === '='){
+				try{
+					// replace unicode operators
+					const expr = current.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
+					// evaluate safely: allow digits, operators, decimal and parentheses
+					if(/^[0-9+\-*/(). %]+$/.test(expr)){
+						current = String(Function('return ('+expr+')')());
+					} else current = '';
+				}catch{current=''}
+				updateDisplay(); return
+			}
+			// other operators (+ - * /)
+			const last = current.slice(-1);
+			if(['+','-','*','/'].includes(last)){
+				current = current.slice(0,-1) + op; updateDisplay(); return
+			}
+			if(current === '' && op !== '-') return; // disallow starting with other ops
+			current += op; updateDisplay();
+		}
+
+		document.querySelector('.keys').addEventListener('click', e => {
+			const t = e.target;
+			if(t.matches('[data-num]')) append(t.textContent);
+			else if(t.dataset.action) perform(t.dataset.action);
+		});
+
+		updateDisplay();
+	</script>
+</body>
+</html>
+
